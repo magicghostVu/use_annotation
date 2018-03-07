@@ -22,7 +22,9 @@ public enum TypeField {
 
     MAP_FIELD((byte) 6),
 
-    SHORT_FIELD((byte)7);
+    SHORT_FIELD((byte) 7),
+
+    OBJECT_FIELD((byte) 8);
 
 
     private byte code;

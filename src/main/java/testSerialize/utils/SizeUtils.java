@@ -1,5 +1,6 @@
 package testSerialize.utils;
 
+import org.apache.commons.lang3.mutable.MutableShort;
 import testSerialize.CanSerialize;
 import testSerialize.annotation_fields.TypeField;
 
@@ -14,8 +15,9 @@ public class SizeUtils {
 
     private static Map<Class, Short> mapSizePrimitive;
 
-    // chỉ tính các kiểu data cơ bản
-    private short calSizePrimitive(Object source) {
+    // chỉ tính các kiểu data cơ bản, tạm thời sử dụng 6 kiểu
+    // sẽ không trả lại giá trị đúng nếu truyền không đúng 6 kiểu đấy
+    private static short calSizePrimitive(Object source) {
 
         short sizeByte = Byte.SIZE;
 
@@ -49,34 +51,67 @@ public class SizeUtils {
     }
 
 
+    // check xem có phải primitive
+    // tính ra cỡ theo byte của một object
     public static short calSimpleSize(TypeField type, Object dataSource) {
+        short tmpSize = calSizePrimitive(dataSource);
 
+        if (tmpSize > 0) {
+            return tmpSize;
+        }
+        // sẽ tính toán thêm ở đây, chỉ còn lại map field và list field
+        else {
 
-        short sizeByte = Byte.SIZE;
+            short size = 0;
 
-        short size = -1;
+            switch (type) {
+                case MAP_FIELD: {
 
-        switch (type) {
-            case BOOLEAN_FIELD: {
-                size = (short) (Byte.SIZE / sizeByte);
-                break;
+                    if (!(dataSource instanceof Map)) {
+                        throw new IllegalArgumentException("map field is not a map");
+                    }
+
+                    Map data = (Map) dataSource;
+
+                    // map rỗng
+                    if (data.isEmpty()) {
+                        size = 0;
+                    }
+                    //kiểm tra data key và value
+                    else {
+                        Object oneKey = data.keySet().iterator().next();
+                        Object oneVal = data.values().iterator().next();
+                        boolean keyIsInvalid = oneKey instanceof CanSerialize;
+                        boolean valueInValid = oneVal instanceof CanSerialize;
+
+                        if (keyIsInvalid || valueInValid) {
+                            throw new IllegalArgumentException("key or value is can not serialize");
+                        }
+
+                        // size of th map
+                        MutableShort res = new MutableShort(calSizePrimitive((short) 0));
+
+                        data.forEach((key, val) -> {
+                            CanSerialize k = (CanSerialize) key;
+                            CanSerialize v = (CanSerialize) val;
+                            res.add(k.size());
+                            res.add(v.size());
+                        });
+                        size = res.shortValue();
+
+                    }
+
+                    //Object
+                    break;
+                }
+                case LIST_FIELD: {
+                    break;
+                }
             }
-            case STRING_FIELD: {
 
-                //String source
-
-                break;
-            }
-            case DOUBLE_FIELD:
-            case LIST_FIELD:
-            case BYTE_FIELD:
-            case MAP_FIELD:
-            case INT_FIELD: {
-
-            }
         }
 
-        return size;
+        return 0;
     }
 
 }

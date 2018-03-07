@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Target(value = {ElementType.FIELD})
 public @interface SerializeField {
     TypeField type();
-    byte index();
+    byte id();
 }

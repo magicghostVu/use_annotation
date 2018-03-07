@@ -15,17 +15,22 @@ import java.util.Map;
 public class Person implements CanDeserialize, CanSerialize {
 
 
-    @SerializeField(type = TypeField.INT_FIELD, index = 0)
+    @SerializeField(type = TypeField.INT_FIELD, id = 0)
     private int id;
 
-    @SerializeField(type = TypeField.STRING_FIELD, index = 1)
+    @SerializeField(type = TypeField.STRING_FIELD, id = 1)
     private String name;
 
-    @SerializeField(type = TypeField.BOOLEAN_FIELD, index = 2)
+    @SerializeField(type = TypeField.BOOLEAN_FIELD, id = 2)
     private boolean male;
 
 
+
+
+
     public Person() {
+
+
     }
 
     @Override
