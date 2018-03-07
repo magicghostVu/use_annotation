@@ -4,12 +4,14 @@ import my_annotation.F_Annotation;
 import my_annotation.MyFClassAnntotation;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by magic on 04/03/2018.
  */
 public class Main {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         System.out.println("okok");
         ClassUseAnnotation c1 = new ClassUseAnnotation();
         Class<?> cl = ClassUseAnnotation.class;
@@ -19,15 +21,20 @@ public class Main {
         MyFClassAnntotation fClassAnntotation = cl.getAnnotation(MyFClassAnntotation.class);
         fClassAnntotation.name();
         Field[] allField = cl.getDeclaredFields();
-        for(Field f:allField){
-            F_Annotation f_annotation= f.getAnnotation(F_Annotation.class);
-            if(f_annotation!=null){
+        for (Field f : allField) {
+            F_Annotation f_annotation = f.getAnnotation(F_Annotation.class);
+            if (f_annotation != null) {
                 f.setAccessible(true);
                 f.set(c1, 1);
                 f.setAccessible(false);
             }
         }
         System.out.println(hadMyFAnntClass);
+
+
+        List<Integer> t = new ArrayList<>();
+
+        Class c = t.getClass();
 
 
     }

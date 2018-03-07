@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.FIELD})
-public @interface ByteField {
-    boolean requireSize() default true;
-    byte indexField();
+public @interface SerializeField {
+    TypeField type();
+    byte index();
 }
