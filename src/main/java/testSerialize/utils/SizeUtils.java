@@ -5,6 +5,7 @@ import testSerialize.CanSerialize;
 import testSerialize.annotation_fields.TypeField;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,11 +16,23 @@ public class SizeUtils {
 
     private static Map<Class, Short> mapSizePrimitive;
 
-    // chỉ tính các kiểu data cơ bản, tạm thời sử dụng 6 kiểu
-    // sẽ không trả lại giá trị đúng nếu truyền không đúng 6 kiểu đấy
-    private static short calSizePrimitive(Object source) {
+    // tính ra size của một object primitive hoặc CanSerialize
+    public static short calSizePrimitiveOrSerialize(Object source) {
+
+
+        if (source instanceof CanSerialize) {
+            return ((CanSerialize) source).size();
+        }
 
         short sizeByte = Byte.SIZE;
+
+        if (source instanceof String) {
+            String str = (String) source;
+            // size của String
+            short res = (short) (Short.SIZE / sizeByte);
+            return (short) (res + str.length() * 2 / sizeByte);
+        }
+
 
         // put all data of primitive type
         if (mapSizePrimitive == null) {
@@ -43,18 +56,10 @@ public class SizeUtils {
     }
 
 
-    // integer, double, short, byte, boolean, String
-    private short calSizeByType(Class<?> cl, CanSerialize source) {
-
-
-        throw new IllegalArgumentException("class not supported");
-    }
-
-
     // check xem có phải primitive
     // tính ra cỡ theo byte của một object
     public static short calSimpleSize(TypeField type, Object dataSource) {
-        short tmpSize = calSizePrimitive(dataSource);
+        short tmpSize = calSizePrimitiveOrSerialize(dataSource);
 
         if (tmpSize > 0) {
             return tmpSize;
@@ -75,20 +80,25 @@ public class SizeUtils {
 
                     // map rỗng
                     if (data.isEmpty()) {
-                        size = 0;
+                        size = calSizePrimitiveOrSerialize((short) 0);
                     }
-                    //kiểm tra data key và value
+                    //kiểm tra data key và value, thuộc primitive hoặc kiểu Canserialize
+                    // todo: fix it in afternoon
                     else {
+
+
                         Object oneKey = data.keySet().iterator().next();
                         Object oneVal = data.values().iterator().next();
-                        boolean keyIsInvalid = oneKey instanceof CanSerialize;
+
+
+                        boolean keyIsInvalid = calSizePrimitiveOrSerialize(oneKey) > 0;
                         boolean valueInValid = oneVal instanceof CanSerialize;
 
                         if (keyIsInvalid || valueInValid) {
-                            throw new IllegalArgumentException("key or value is can not serialize");
+                            throw new IllegalArgumentException("key or value can not be serialize");
                         }
 
-                        // size of th map
+                        // size of the map
                         MutableShort res = new MutableShort(calSizePrimitive((short) 0));
 
                         data.forEach((key, val) -> {
@@ -105,13 +115,39 @@ public class SizeUtils {
                     break;
                 }
                 case LIST_FIELD: {
+                    List<?> data = (List<?>) dataSource;
+                    if (data.isEmpty()) {
+                        size = 0;
+                    } else {
+                        Object oneElement = data.get(0);
+                        boolean canSeri = oneElement instanceof CanSerialize;
+                        // check type
+                        if (!canSeri) {
+                            throw new IllegalArgumentException("element in list can not be serialize");
+                        } else {
+
+                            // size of the list
+                            MutableShort tmp = new MutableShort((short) 0);
+
+                            data.forEach(e -> {
+                                CanSerialize c = (CanSerialize) e;
+                                tmp.add(c.size());
+                            });
+
+                            size = tmp.shortValue();
+                        }
+
+
+                    }
+
+
                     break;
                 }
             }
+            return size;
 
         }
-
-        return 0;
+        //return;
     }
 
 }
