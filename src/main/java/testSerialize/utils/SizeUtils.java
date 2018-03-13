@@ -16,7 +16,30 @@ public class SizeUtils {
 
     private static Map<Class, Short> mapSizePrimitive;
 
+
+    private synchronized static void initCacheMap() {
+        short sizeByte = Byte.SIZE;
+        if (mapSizePrimitive == null) {
+            mapSizePrimitive = new HashMap<>();
+            mapSizePrimitive.put(Integer.class, (short) (Integer.SIZE / sizeByte));
+            mapSizePrimitive.put(Double.class, (short) (Double.SIZE / sizeByte));
+            mapSizePrimitive.put(Short.class, (short) (Short.SIZE / sizeByte));
+            mapSizePrimitive.put(Byte.class, (short) (Byte.SIZE / sizeByte));
+            mapSizePrimitive.put(Boolean.class, (short) (Byte.SIZE / sizeByte));
+            mapSizePrimitive.put(Long.class, (short) (Long.SIZE / sizeByte));
+        }
+    }
+
+    public static boolean isPrimitive(Object o) {
+        initCacheMap();
+        if (o instanceof String) return true;
+        if (mapSizePrimitive.containsKey(o.getClass())) return true;
+        return false;
+    }
+
+
     // tính ra size của một object primitive hoặc CanSerialize
+    //sẽ không thể tính ra bất cứ object có kiểu khác
     public static short calSizePrimitiveOrSerialize(Object source) {
 
 
@@ -30,20 +53,10 @@ public class SizeUtils {
             String str = (String) source;
             // size của String
             short res = (short) (Short.SIZE / sizeByte);
-            return (short) (res + str.length() * 2 / sizeByte);
+            return (short) (res + str.length() * 2);
         }
-
-
         // put all data of primitive type
-        if (mapSizePrimitive == null) {
-            mapSizePrimitive = new HashMap<>();
-            mapSizePrimitive.put(Integer.class, (short) (Integer.SIZE / sizeByte));
-            mapSizePrimitive.put(Double.class, (short) (Double.SIZE / sizeByte));
-            mapSizePrimitive.put(Short.class, (short) (Short.SIZE / sizeByte));
-            mapSizePrimitive.put(Byte.class, (short) (Byte.SIZE / sizeByte));
-            mapSizePrimitive.put(Boolean.class, (short) (Byte.SIZE / sizeByte));
-            mapSizePrimitive.put(Long.class, (short) (Long.SIZE / sizeByte));
-        }
+        initCacheMap();
 
         Class t = source.getClass();
 
@@ -76,67 +89,63 @@ public class SizeUtils {
                         throw new IllegalArgumentException("map field is not a map");
                     }
 
+                    //Object on
+
+                    //boolean validDataType=
+
                     Map data = (Map) dataSource;
 
-                    // map rỗng
+                    // map rỗng, size=2 , bằng kích thước 2 byte (chỉ bao gồm kích thước map)
                     if (data.isEmpty()) {
                         size = calSizePrimitiveOrSerialize((short) 0);
-                    }
-                    //kiểm tra data key và value, thuộc primitive hoặc kiểu Canserialize
-                    // todo: fix it in afternoon
-                    else {
+                    } else {
 
+                        // cứ tính size của map trước đã, dùng một số short để lưu cỡ của map
+                        MutableShort _tmpSize = new MutableShort(calSizePrimitiveOrSerialize((short) 0));
 
-                        Object oneKey = data.keySet().iterator().next();
-                        Object oneVal = data.values().iterator().next();
+                        // cần thêm cỡ tương ứng của từng key và value
+                        short sizeMap = (short) data.size();
 
+                        // hard code
+                        short sizeMetaDataForInforSizeEntries = (short) (sizeMap * 2 * calSizePrimitiveOrSerialize((short) 0));
 
-                        boolean keyIsInvalid = calSizePrimitiveOrSerialize(oneKey) > 0;
-                        boolean valueInValid = oneVal instanceof CanSerialize;
+                        _tmpSize.add(sizeMetaDataForInforSizeEntries);
 
-                        if (keyIsInvalid || valueInValid) {
-                            throw new IllegalArgumentException("key or value can not be serialize");
-                        }
-
-                        // size of the map
-                        MutableShort res = new MutableShort(calSizePrimitive((short) 0));
-
+                        //kích thước của data ()
                         data.forEach((key, val) -> {
-                            CanSerialize k = (CanSerialize) key;
-                            CanSerialize v = (CanSerialize) val;
-                            res.add(k.size());
-                            res.add(v.size());
+                            _tmpSize.add(calSizePrimitiveOrSerialize(key));
+                            _tmpSize.add(calSizePrimitiveOrSerialize(val));
                         });
-                        size = res.shortValue();
+
+                        size = _tmpSize.shortValue();
 
                     }
-
+                    // map rỗng
                     //Object
                     break;
                 }
+
+                // tính size cho list
                 case LIST_FIELD: {
                     List<?> data = (List<?>) dataSource;
                     if (data.isEmpty()) {
-                        size = 0;
+                        size = calSizePrimitiveOrSerialize((short) 0);
                     } else {
-                        Object oneElement = data.get(0);
-                        boolean canSeri = oneElement instanceof CanSerialize;
-                        // check type
-                        if (!canSeri) {
-                            throw new IllegalArgumentException("element in list can not be serialize");
-                        } else {
 
-                            // size of the list
-                            MutableShort tmp = new MutableShort((short) 0);
+                        // cỡ của List
+                        MutableShort sizeHeader = new MutableShort(calSizePrimitiveOrSerialize((short) 0));
 
-                            data.forEach(e -> {
-                                CanSerialize c = (CanSerialize) e;
-                                tmp.add(c.size());
-                            });
 
-                            size = tmp.shortValue();
-                        }
+                        int sizeList = data.size();
+                        // chỗ lưu từng cỡ của từng element, mỗi element sẽ có 2 byte để lưu cỡ của data element đó
+                        sizeHeader.add((short) (sizeList * 2 * calSizePrimitiveOrSerialize((short) 0)));
 
+
+                        MutableShort sizeData= new MutableShort(0);
+
+                        data.forEach(e->{
+                            sizeData.add();
+                        });
 
                     }
 

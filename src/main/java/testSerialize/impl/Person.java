@@ -25,6 +25,10 @@ public class Person implements CanDeserialize, CanSerialize {
     private boolean male;
 
 
+    @SerializeField(type = TypeField.MAP_FIELD, id=3, keyType = Integer.class, valueType = Integer.class)
+    private Map<Integer, Integer> schoolByAge;
+
+
 
 
 
@@ -96,5 +100,13 @@ public class Person implements CanDeserialize, CanSerialize {
 
     public void setMale(boolean male) {
         this.male = male;
+    }
+
+    public Map<Integer, Integer> getSchoolByAge() {
+        return schoolByAge;
+    }
+
+    public void setSchoolByAge(Map<Integer, Integer> schoolByAge) {
+        this.schoolByAge = schoolByAge;
     }
 }

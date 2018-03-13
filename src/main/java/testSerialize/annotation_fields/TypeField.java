@@ -29,6 +29,9 @@ public enum TypeField {
 
     private byte code;
 
+
+
+
     TypeField(byte code) {
         this.code = code;
     }
